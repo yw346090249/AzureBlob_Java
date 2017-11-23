@@ -221,7 +221,8 @@ public class AzureApp
 	
 	/*
 	 * 删除某一时刻之前的文件
-	 * 
+	 * @param storageConnectString Azure Blob的连接字符串
+	 * @param date 时刻
 	 */
 	public static void deleteFilesBeforeTime(String storageConnectionString, Date date) throws InvalidKeyException, URISyntaxException, StorageException
 	{
