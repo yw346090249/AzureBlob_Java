@@ -22,6 +22,7 @@
 package blobQuickstart.blobAzureApp;
 import com.microsoft.azure.storage.*;
 import com.microsoft.azure.storage.blob.*;
+import com.microsoft.azure.storage.blob.BlobContainerPermissions; 
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -289,7 +290,25 @@ public class AzureApp
 		blob.downloadToFile(downloadedFile.getAbsolutePath());
 	}
 	
-    
+    /*
+     * 设置读取权限(设置为根据blob的路径可以匿名访问blob)
+     * @param storageConnectString Azure Blob的连接字符串
+	 * @param containerName blob container名字
+     */
+	public static void setPermission(String storageConnectionString, String containerName) throws InvalidKeyException, URISyntaxException, StorageException
+	{
+		CloudStorageAccount storageAccount;
+    	CloudBlobClient blobClient = null;
+    	CloudBlobContainer container=null;
+    	storageAccount = CloudStorageAccount.parse(storageConnectionString);
+    	blobClient = storageAccount.createCloudBlobClient();
+    	container = blobClient.getContainerReference(containerName);
+    	BlobContainerPermissions containerPermissions = new BlobContainerPermissions();
+    	containerPermissions.setPublicAccess(BlobContainerPublicAccessType.BLOB);
+    	container.uploadPermissions(containerPermissions);
+	}
+	
+	
 	
 	
 	public static void main( String[] args )
