@@ -22,7 +22,6 @@
 package blobQuickstart.blobAzureApp;
 import com.microsoft.azure.storage.*;
 import com.microsoft.azure.storage.blob.*;
-import com.microsoft.azure.storage.blob.BlobContainerPermissions; 
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -282,20 +281,24 @@ public class AzureApp
 	 */
 	public static void deleteDir(String storageConnectionString, String DirUrl) throws InvalidKeyException, URISyntaxException, StorageException
 	{
-		CloudBlobDirectory blobDirectory;
 		CloudStorageAccount storageAccount;
     	CloudBlobClient blobClient = null;
     	CloudBlobContainer container=null;
+    	CloudBlob blob = null;
 
     	String[] result = getParam(DirUrl);
     	storageAccount = CloudStorageAccount.parse(storageConnectionString);
     	blobClient = storageAccount.createCloudBlobClient();
 		container = blobClient.getContainerReference(result[0]);
-		blobDirectory = container.getDirectoryReference(result[1]);
-		for (ListBlobItem listBlob: blobDirectory.listBlobs()) {
-			URI uri = listBlob.getUri();
-			CloudBlockBlob blob = container.getBlockBlobReference(uri.toString());
-		    blob.deleteIfExists();
+		//blobDirectory = container.getDirectoryReference(result[1]);
+		for (ListBlobItem item: container.listBlobs(result[1]))
+		{
+			if (item instanceof CloudBlob) {
+	            blob = (CloudBlob) item;
+			}
+		    if (blob.deleteIfExists()) {
+		        System.out.println("Delete file "+blob.getUri().toString());
+		    }
 		}
 	}
 	
@@ -308,12 +311,15 @@ public class AzureApp
 	{
 		CloudStorageAccount storageAccount;
     	CloudBlobClient blobClient = null;
+    	CloudBlob blob = null;
 
     	storageAccount = CloudStorageAccount.parse(storageConnectionString);
     	blobClient = storageAccount.createCloudBlobClient();
     	for(CloudBlobContainer container:blobClient.listContainers()) {
-    		for(ListBlobItem listBlob: container.listBlobs()) {
-    			CloudBlockBlob blob = container.getBlockBlobReference(listBlob.getUri().toString());
+    		for(ListBlobItem item: container.listBlobs()) {
+    			if (item instanceof CloudBlob) {
+    	            blob = (CloudBlob) item;
+    			}
     			Date fileDate = blob.getProperties().getLastModified();
     			if(date.getTime()<fileDate.getTime())
     			{
@@ -402,11 +408,21 @@ public class AzureApp
         	String MainUrl = "http://asp.cntv.cdnpe.com/";
   			String FileUrl = "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/0.ts";
   			String DirUrl = "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/";
+  			String[] FileUrls = {
+  			                     "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/0.ts",
+  			                     "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/1.ts",
+  			                     "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/2.ts",
+  			                     "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/3.ts",
+  			                     "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/4.ts"
+  			};
   			setPermission(storageConnectionString, "asp");
-  			uploadFile(storageConnectionString, MainUrl, FileUrl);  			
+  			//uploadFile(storageConnectionString, MainUrl, FileUrl);  			
+  			//listFileInDir(storageConnectionString, DirUrl);
+  			//deleteFile(storageConnectionString, FileUrl);
+  			//uploadBatchFile(storageConnectionString, MainUrl, FileUrls);
   			listFileInDir(storageConnectionString, DirUrl);
-  			
-  			//download(url, "test1.ts");
+  			deleteDir(storageConnectionString, DirUrl);
+  			listFileInDir(storageConnectionString, DirUrl);
         } 
     	catch (StorageException ex)
 		{
