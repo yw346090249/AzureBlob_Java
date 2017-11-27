@@ -393,6 +393,30 @@ public class AzureApp
     	container.uploadPermissions(containerPermissions);
 	}
 	
+	/*
+	 * append blob
+	 */
+	public static void appendLog(String storageConnectionString, String containerName, String blobName, String appendContent) throws InvalidKeyException, URISyntaxException, StorageException, IOException
+	{
+		CloudStorageAccount storageAccount;
+    	CloudBlobClient blobClient = null;
+    	CloudBlobContainer container = null;
+    	storageAccount = CloudStorageAccount.parse(storageConnectionString);
+    	blobClient = storageAccount.createCloudBlobClient();
+    	container = blobClient.getContainerReference(containerName);
+    	container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(), new OperationContext());		    		
+	    
+    	CloudAppendBlob blob = container.getAppendBlobReference(blobName);
+    	if (blob.exists())
+    	{
+        	blob.appendText(appendContent);
+    	}else {
+    		blob.createOrReplace();
+    	}
+	}
+	
+	
+	
 	public static void main( String[] args ) throws Throwable
     {
     	
@@ -420,9 +444,13 @@ public class AzureApp
   			//listFileInDir(storageConnectionString, DirUrl);
   			//deleteFile(storageConnectionString, FileUrl);
   			//uploadBatchFile(storageConnectionString, MainUrl, FileUrls);
-  			listFileInDir(storageConnectionString, DirUrl);
-  			deleteDir(storageConnectionString, DirUrl);
-  			listFileInDir(storageConnectionString, DirUrl);
+  			//listFileInDir(storageConnectionString, DirUrl);
+  			//deleteDir(storageConnectionString, DirUrl);
+  			//listFileInDir(storageConnectionString, DirUrl);
+  			appendLog(storageConnectionString, "asp", "log", "test1");
+  			appendLog(storageConnectionString, "asp", "log", "test2");
+  			appendLog(storageConnectionString, "asp", "log", "test3");
+  			appendLog(storageConnectionString, "asp", "log", "test4");
         } 
     	catch (StorageException ex)
 		{
