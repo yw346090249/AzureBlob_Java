@@ -394,9 +394,9 @@ public class AzureApp
 	}
 	
 	/*
-	 * append blob
+	 * append blob String
 	 */
-	public static void appendLog(String storageConnectionString, String containerName, String blobName, String appendContent) throws InvalidKeyException, URISyntaxException, StorageException, IOException
+	public static void appendString(String storageConnectionString, String containerName, String blobName, String appendContent) throws InvalidKeyException, URISyntaxException, StorageException, IOException
 	{
 		CloudStorageAccount storageAccount;
     	CloudBlobClient blobClient = null;
@@ -415,7 +415,65 @@ public class AzureApp
     	}
 	}
 	
+	/*
+	 * append blob byte[]
+	 */
+	public static void appendBytes(String storageConnectionString, String containerName, String blobName, byte[] appendContent) throws InvalidKeyException, URISyntaxException, StorageException, IOException
+	{
+		CloudStorageAccount storageAccount;
+    	CloudBlobClient blobClient = null;
+    	CloudBlobContainer container = null;
+    	storageAccount = CloudStorageAccount.parse(storageConnectionString);
+    	blobClient = storageAccount.createCloudBlobClient();
+    	container = blobClient.getContainerReference(containerName);
+    	container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(), new OperationContext());		    		
+	    
+    	CloudAppendBlob blob = container.getAppendBlobReference(blobName);
+    	if (blob.exists())
+    	{
+        	blob.appendFromByteArray(appendContent, 0, appendContent.length);
+    	}else {
+    		blob.createOrReplace();
+    	}
+	}
 	
+	/*
+	 * read appendblob byte[]
+     * @param storageConnectString Azure Blob的连接字符串
+	 * @param containerName blob container名字
+	 * @param blobName blob 名字
+	 * @param startPos 读取开始位置
+	 * @param offsite 读取结束位置
+	 * 
+	 */
+	public static byte[] readBytes(String storageConnectionString, String containerName, String blobName, long startPos, long offsite) throws InvalidKeyException, URISyntaxException, StorageException, IOException
+	{
+		try {
+			CloudStorageAccount storageAccount;
+	    	CloudBlobClient blobClient = null;
+	    	CloudBlobContainer container = null;
+	    	storageAccount = CloudStorageAccount.parse(storageConnectionString);
+	    	blobClient = storageAccount.createCloudBlobClient();
+	    	container = blobClient.getContainerReference(containerName);
+	    	container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(), new OperationContext());		    		
+		    
+	    	CloudAppendBlob blob = container.getAppendBlobReference(blobName);
+	    	if (blob.exists())
+	    	{
+	    		byte[] buffer = new byte[1024];
+	        	blob.downloadRangeToByteArray(startPos, offsite, buffer, 0);
+	        	return buffer;
+	    	} else {
+	    		blob.createOrReplace();
+	    	}
+	    	return null;
+		} 
+    	catch (StorageException ex)
+		{
+  			System.out.println(String.format("Error returned from the service. Http code: %d and error code: %s", ex.getHttpStatusCode(), ex.getErrorCode()));
+			return null;
+        }
+	}
 	
 	public static void main( String[] args ) throws Throwable
     {
@@ -447,10 +505,10 @@ public class AzureApp
   			//listFileInDir(storageConnectionString, DirUrl);
   			//deleteDir(storageConnectionString, DirUrl);
   			//listFileInDir(storageConnectionString, DirUrl);
-  			appendLog(storageConnectionString, "asp", "log", "test1");
-  			appendLog(storageConnectionString, "asp", "log", "test2");
-  			appendLog(storageConnectionString, "asp", "log", "test3");
-  			appendLog(storageConnectionString, "asp", "log", "test4");
+  			appendString(storageConnectionString, "asp", "log", "test1");
+  			appendString(storageConnectionString, "asp", "log", "test2");
+  			appendString(storageConnectionString, "asp", "log", "test3");
+  			appendString(storageConnectionString, "asp", "log", "test4");
         } 
     	catch (StorageException ex)
 		{
