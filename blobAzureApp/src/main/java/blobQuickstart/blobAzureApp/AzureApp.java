@@ -25,6 +25,7 @@ import com.microsoft.azure.storage.blob.*;
 import com.microsoft.azure.storage.blob.BlobContainerPermissions; 
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
@@ -43,6 +44,13 @@ import java.util.Map;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date; 
+
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+
 /* *************************************************************************************************************************
  * Summary: This application demonstrates how to use the Blob Storage service.
  * It does so by creating a container, creating a file, then uploading that file, listing all files in a container, 
@@ -67,12 +75,82 @@ public class AzureApp
 	 */
 	public static final String storageConnectionString =
 	    "DefaultEndpointsProtocol=https;" +
-	    "AccountName=<AccountName>;" +
-	    "AccountKey=<AccountKey>";
+	    "AccountName=cntvuswepocstorage03;" +
+	    "AccountKey=rOumfJYzEM11KIhY2jwfOcszWE8kopkO9+Ohw/aGzFIrW0YIavNOSZ4/5edrK7IPAf0q67aI++28ijfUJLOiCw==";
 	
 	/*
 	public static final String storageConnectionString="DefaultEndpointsProtocol=https;AccountName=proxydemoforcntv;AccountKey=ew4tkhiqiJzB07mtE8MD/7GyAcRweFogLqorbqYESDIPSzt0xHKPXCGNH/J6i9wzXgtl2P4US4m/5PJyXe2pKQ==;EndpointSuffix=core.windows.net";
 	*/
+	
+    /* 
+     * 从输入流中获取字节数组   
+     * @param inputStream   
+     * @return   
+     * @throws IOException   
+     */    
+    public static  byte[] readInputStream(InputStream inputStream) throws IOException {      
+        byte[] buffer = new byte[1024];      
+        int len = 0;      
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();      
+        while((len = inputStream.read(buffer)) != -1) {      
+            bos.write(buffer, 0, len);      
+        }      
+        bos.close();      
+        return bos.toByteArray();      
+    }   
+	/*
+	 * download
+	 */
+	public static byte[] download(String urlString)  
+    {
+        // 构造URL
+        URL url;
+        try
+        {
+            url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection();      
+            //设置超时间为3秒    
+            conn.setConnectTimeout(3*1000);    
+            //防止屏蔽程序抓取而返回403错误    
+            conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");    
+
+             // 打开连接
+            URLConnection con = url.openConnection();
+            // 输入流
+            InputStream is = con.getInputStream();
+            byte[] getData = readInputStream(is);
+            
+            /*
+            //文件保存位置    
+            File saveDir = new File("test.ts");    
+            if(!saveDir.exists()){    
+                saveDir.mkdir();    
+            }    
+            File file = new File("test.ts");        
+            FileOutputStream fos = new FileOutputStream(file);         
+            fos.write(getData);     
+            if(fos!=null){    
+                fos.close();      
+            }    
+            */
+            if(is!=null){    
+                is.close();    
+            }    
+            
+            return getData;
+        }
+        catch (MalformedURLException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+		return null;
+    }   
 	
 	/*
 	 * 发送Http Get请求
@@ -148,8 +226,9 @@ public class AzureApp
     	CloudBlobClient blobClient = null;
     	CloudBlobContainer container=null;
 
-    	String[] result = getParam(fileUrl);		
-		String res = sendGet(mainUrl+fileUrl,"");
+    	String[] result = getParam(fileUrl);	
+    	byte[] res = download(mainUrl+fileUrl);
+		//String res = sendGet(mainUrl+fileUrl,"");
 		// 创建blob client以及container
     	storageAccount = CloudStorageAccount.parse(storageConnectionString);
     	blobClient = storageAccount.createCloudBlobClient();
@@ -159,8 +238,8 @@ public class AzureApp
 	    
 		//创建blob
 		CloudBlockBlob blob = container.getBlockBlobReference(result[1]);
-	    
-	    blob.uploadText(res);
+		
+	    blob.uploadFromByteArray(res, 0, res.length);
 	}
 	
 	/*
@@ -308,10 +387,7 @@ public class AzureApp
     	container.uploadPermissions(containerPermissions);
 	}
 	
-	
-	
-	
-	public static void main( String[] args )
+	public static void main( String[] args ) throws Throwable
     {
     	
     	File sourceFile = null, downloadedFile = null;
@@ -322,52 +398,15 @@ public class AzureApp
     	CloudBlobContainer container=null;
         
         try {
+        	String url = "http://asp.cntv.cdnpe.com/asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/0.ts";
         	String MainUrl = "http://asp.cntv.cdnpe.com/";
   			String FileUrl = "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/0.ts";
-//  			String[] lStr = FileUrl.split("\\.");
-//  			String fileFormat = lStr[lStr.length-1];
-//  			String containerName = lStr[0].split("/", 2)[0];
-//  			String fileName = FileUrl.split("/", 2)[1];
-        	String[] result = getParam(FileUrl);
-  			System.out.println(result);  			  			
-  			String res = sendGet(MainUrl+FileUrl,"");
-  		  
-        	// Parse the connection string and create a blob client to interact with Blob storage
-        	storageAccount = CloudStorageAccount.parse(storageConnectionString);
-	    	blobClient = storageAccount.createCloudBlobClient();
-			container = blobClient.getContainerReference(result[0]);
-	    	
-  			// Create the container if it does not exist with public access.
-  			System.out.println("Creating container: " + container.getName());
-  			container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(), new OperationContext());		    
-  
-  			//Creating a sample file
-  			sourceFile = File.createTempFile(result[1],"."+result[2]);
-  			System.out.println("Creating a sample file at: " + sourceFile.toString());
-  			Writer output = new BufferedWriter(new FileWriter(sourceFile));
-  			output.write(res);
-  			output.close();
+  			String DirUrl = "asp/hls/450/0303000a/3/default/44ce409f6c5f49028fd6921fe0cdee6d/";
+  			setPermission(storageConnectionString, "asp");
+  			uploadFile(storageConnectionString, MainUrl, FileUrl);  			
+  			listFileInDir(storageConnectionString, DirUrl);
   			
-  		    
-  			//Getting a blob reference
-  			CloudBlockBlob blob = container.getBlockBlobReference(result[1]);
-  		    
-  		    //Creating blob and uploading file to it
-  			System.out.println("Uploading the sample file ");
-  		    blob.uploadFromFile(sourceFile.getAbsolutePath());
-
-  		    //Listing contents of container
-  		    for (ListBlobItem blobItem : container.listBlobs()) {
-  		        System.out.println("URI of blob is: " + blobItem.getUri());
-  		    }
-  		
-  			// Download blob. In most cases, you would have to retrieve the reference
-  		    // to cloudBlockBlob here. However, we created that reference earlier, and 
-  			// haven't changed the blob we're interested in, so we can reuse it. 
-  			// Here we are creating a new file to download to. Alternatively you can also pass in the path as a string into downloadToFile method: blob.downloadToFile("/path/to/new/file").
-  		    downloadedFile = new File(sourceFile.getParentFile(), "downloadedFile.txt");
-  		    blob.downloadToFile(downloadedFile.getAbsolutePath());
-  		    
+  			//download(url, "test1.ts");
         } 
     	catch (StorageException ex)
 		{
@@ -379,31 +418,6 @@ public class AzureApp
         }
         finally 
         {
-  		    System.out.println("The program has completed successfully.");
-  		    System.out.println("Press the 'Enter' key while in the console to delete the sample files, example container, and exit the application.");
-		    
-		    //Pausing for input
-		    Scanner sc = new Scanner(System.in);
-		    sc.nextLine();
-		    
-  		    System.out.println("Deleting the container");
-			try {
-				if(container != null)
-					container.deleteIfExists();
-			} catch (StorageException ex) {
-	  			System.out.println(String.format("Service error. Http code: %d and error code: %s", ex.getHttpStatusCode(), ex.getErrorCode()));
-			}
-			
-  		    System.out.println("Deleting the source, and downloaded files");
-
-			if(downloadedFile != null)
-				downloadedFile.deleteOnExit();
-						
-			if(sourceFile != null)
-				sourceFile.deleteOnExit();
-		    
-		    //Closing scanner
-		    sc.close();
         }
       
     }
