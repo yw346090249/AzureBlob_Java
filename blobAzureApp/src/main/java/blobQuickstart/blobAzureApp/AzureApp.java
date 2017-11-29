@@ -446,7 +446,7 @@ public class AzureApp
 	 * @param blobName blob 名字
 	 * @param startPos 读取开始位置
 	 * @param offsite 读取结束位置
-	 * 
+	 * return byte[]
 	 */
 	public static byte[] readBytes(String storageConnectionString, String containerName, String blobName, long startPos, long offsite) throws InvalidKeyException, URISyntaxException, StorageException, IOException
 	{
@@ -476,6 +476,14 @@ public class AzureApp
 			return null;
         }
 	}
+	
+	/*
+	 * 获取blob读取的流
+     * @param storageConnectString Azure Blob的连接字符串
+	 * @param containerName blob container名字
+	 * @param blobName blob 名字
+	 * @output BlobInputStream blob的stream信息
+	 */
 	
 	public static BlobInputStream getStream(String storageConnectionString, String containerName, String blobName) throws InvalidKeyException, URISyntaxException
 	{
