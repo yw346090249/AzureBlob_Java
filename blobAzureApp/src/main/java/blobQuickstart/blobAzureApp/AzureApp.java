@@ -44,6 +44,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date; 
 
+import java.io.OutputStream;
+
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -463,6 +465,33 @@ public class AzureApp
 	    		byte[] buffer = new byte[1024];
 	        	blob.downloadRangeToByteArray(startPos, offsite, buffer, 0);
 	        	return buffer;
+	    	} else {
+	    		blob.createOrReplace();
+	    	}
+	    	return null;
+		} 
+    	catch (StorageException ex)
+		{
+  			System.out.println(String.format("Error returned from the service. Http code: %d and error code: %s", ex.getHttpStatusCode(), ex.getErrorCode()));
+			return null;
+        }
+	}
+	
+	public static BlobInputStream getStream(String storageConnectionString, String containerName, String blobName) throws InvalidKeyException, URISyntaxException
+	{
+		try {
+			CloudStorageAccount storageAccount;
+	    	CloudBlobClient blobClient = null;
+	    	CloudBlobContainer container = null;
+	    	storageAccount = CloudStorageAccount.parse(storageConnectionString);
+	    	blobClient = storageAccount.createCloudBlobClient();
+	    	container = blobClient.getContainerReference(containerName);
+	    	container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(), new OperationContext());		    		
+		    
+	    	CloudAppendBlob blob = container.getAppendBlobReference(blobName);
+	    	if (blob.exists())
+	    	{
+	    		return blob.openInputStream();
 	    	} else {
 	    		blob.createOrReplace();
 	    	}
