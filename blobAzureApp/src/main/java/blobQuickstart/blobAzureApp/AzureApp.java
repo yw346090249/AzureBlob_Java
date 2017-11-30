@@ -512,6 +512,22 @@ public class AzureApp
         }
 	}
 	
+	/*
+	 * 获取blob读取的流
+     * @param storageConnectString Azure Blob的连接字符串
+	 * @param containerName blob container名字
+	 * @param blobName blob 名字
+	 * @param Skip 跳过多少bytes
+	 * @output BlobInputStream blob的stream信息
+	 */
+	
+	public static BlobInputStream getStream(String storageConnectionString, String containerName, String blobName, long Skip) throws InvalidKeyException, URISyntaxException, IOException
+	{
+		BlobInputStream stream = getStream(storageConnectionString, containerName, blobName);
+		stream.skip(Skip);
+		return stream;
+	}
+	
 	public static void main( String[] args ) throws Throwable
     {
     	
