@@ -523,9 +523,31 @@ public class AzureApp
 	
 	public static BlobInputStream getStream(String storageConnectionString, String containerName, String blobName, long Skip) throws InvalidKeyException, URISyntaxException, IOException
 	{
-		BlobInputStream stream = getStream(storageConnectionString, containerName, blobName);
-		stream.skip(Skip);
-		return stream;
+		try {
+			CloudStorageAccount storageAccount;
+	    	CloudBlobClient blobClient = null;
+	    	CloudBlobContainer container = null;
+	    	storageAccount = CloudStorageAccount.parse(storageConnectionString);
+	    	blobClient = storageAccount.createCloudBlobClient();
+	    	container = blobClient.getContainerReference(containerName);
+	    	container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(), new OperationContext());		    		
+		    
+	    	CloudAppendBlob blob = container.getAppendBlobReference(blobName);
+	    	if (blob.exists())
+	    	{
+	    		BlobInputStream stream = blob.openInputStream();
+	    		stream.skip(Skip);
+	    		return stream;
+	    	} else {
+	    		blob.createOrReplace();
+	    	}
+	    	return null;
+		} 
+    	catch (StorageException ex)
+		{
+  			System.out.println(String.format("Error returned from the service. Http code: %d and error code: %s", ex.getHttpStatusCode(), ex.getErrorCode()));
+			return null;
+        }
 	}
 	
 	public static void main( String[] args ) throws Throwable
